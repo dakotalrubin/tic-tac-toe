@@ -9,14 +9,11 @@ function Square({ value, onSquareClick }) {
   );
 }
 
+// Child component of the parent component Game
 // Parent component of the child component Square
-export default function Board() {
-  // Initialize state variables
-  const [xIsNext, setXIsNext] = useState(true);
-  const [squares, setSquares] = useState(Array(9).fill(null));
-
+function Board({ xIsNext, squares, onPlay }) {
   function handleClick(index) {
-    // Check whether a player has met win conditions
+    // Check whether a player has met any win conditions
     // Also check whether the clicked square is already filled
     if (calculateWinner(squares) || squares[index]) {
       return;
@@ -32,9 +29,8 @@ export default function Board() {
       nextSquares[index] = "O";
     }
 
-    // Render new board and update player turn
-    setSquares(nextSquares);
-    setXIsNext(!xIsNext);
+    // Add current board to history array and update player turn
+    onPlay(nextSquares);
   }
 
   // Check win conditions
@@ -72,8 +68,34 @@ export default function Board() {
   );
 }
 
+// Parent component of the child component Board
+export default function Game() {
+  // Initialize state variables
+  const [xIsNext, setXIsNext] = useState(true);
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+
+  // Current board is the final array in history array
+  const currentSquares = history[history.length - 1];
+
+  // Add nextSquares array to history array
+  function handlePlay(nextSquares) {
+    setHistory([...history, nextSquares]);
+    setXIsNext(!xIsNext);
+  }
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      </div>
+      <div className="game-info">
+        <ol>{}</ol>
+      </div>
+    </div>
+  );
+}
+
 // Check squares array for win conditions
-// Returns null if game still in progress
 function calculateWinner(squares) {
   const lines = [
     [0, 1, 2],
@@ -95,5 +117,6 @@ function calculateWinner(squares) {
     }
   }
 
+  // Returns null if game still in progress
   return null;
 }
