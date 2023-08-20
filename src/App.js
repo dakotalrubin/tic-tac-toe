@@ -71,17 +71,44 @@ function Board({ xIsNext, squares, onPlay }) {
 // Parent component of the child component Board
 export default function Game() {
   // Initialize state variables
-  const [xIsNext, setXIsNext] = useState(true);
   const [history, setHistory] = useState([Array(9).fill(null)]);
+  const [currentMove, setCurrentMove] = useState(0);
+  const xIsNext = currentMove % 2 === 0;
 
-  // Current board is the final array in history array
-  const currentSquares = history[history.length - 1];
+  // Current board state is the current move array in history array
+  const currentSquares = history[currentMove];
 
-  // Add nextSquares array to history array
+  // Add nextSquares array to history array at the current move index
   function handlePlay(nextSquares) {
-    setHistory([...history, nextSquares]);
-    setXIsNext(!xIsNext);
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+    setHistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
   }
+
+  // Current board state is the move selected by the player
+  function jumpTo(nextMove) {
+    setCurrentMove(nextMove);
+  }
+
+  // Create map of history array elements to React button elements
+  const moves = history.map((squares, move) => {
+    let description;
+
+    // Set message text
+    if (move > 0 && move === currentMove) {
+      return <li key={move}>You are viewing Move #{move}</li>;
+    } else if (move > 0) {
+      description = "Go to Move #" + move;
+    } else {
+      description = "Go to Game Start";
+    }
+
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+  });
 
   return (
     <div className="game">
@@ -89,7 +116,7 @@ export default function Game() {
         <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
       </div>
       <div className="game-info">
-        <ol>{}</ol>
+        <ol>{moves}</ol>
       </div>
     </div>
   );
