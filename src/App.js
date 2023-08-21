@@ -12,8 +12,41 @@ function Square({ value, onSquareClick }) {
 // Child component of the parent component Game
 // Parent component of the child component Square
 function Board({ xIsNext, squares, onPlay }) {
+  // Generate a square with given id
+  function renderSquare(id) {
+    return (
+      <Square
+        key={id}
+        value={squares[id]}
+        onSquareClick={() => handleClick(id)}
+      />
+    );
+  }
+
+  // Generate a game board with given size using a nested for loop
+  function renderBoard(size) {
+    let board = [];
+
+    for (let i = 0; i < size; i++) {
+      let row = [];
+
+      for (let j = 0; j < size; j++) {
+        row.push(renderSquare(i * 3 + j));
+      }
+
+      board.push(
+        <div key={i} className="board-row">
+          {row}
+        </div>
+      );
+    }
+
+    return board;
+  }
+
+  // Update game board when a player clicks a square
   function handleClick(index) {
-    // Check whether a player has met any win conditions
+    // Check whether a player has met win conditions
     // Also check whether the clicked square is already filled
     if (calculateWinner(squares) || squares[index]) {
       return;
@@ -49,21 +82,7 @@ function Board({ xIsNext, squares, onPlay }) {
   return (
     <>
       <div className="status">{status}</div>
-      <div className="board-row">
-        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
-        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
-        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
-      </div>
-      <div className="board-row">
-        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
-        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
-        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
-      </div>
-      <div className="board-row">
-        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
-        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
-        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
-      </div>
+      <div>{renderBoard(3)}</div>
     </>
   );
 }
@@ -73,6 +92,9 @@ export default function Game() {
   // Initialize state variables
   const [history, setHistory] = useState([Array(9).fill(null)]);
   const [currentMove, setCurrentMove] = useState(0);
+  const [isAscending, setIsAscending] = useState(true);
+
+  // The "X" player moves on even-numbered turns
   const xIsNext = currentMove % 2 === 0;
 
   // Current board state is the current move array in history array
@@ -88,6 +110,11 @@ export default function Game() {
   // Current board state is the move selected by the player
   function jumpTo(nextMove) {
     setCurrentMove(nextMove);
+  }
+
+  // Sort move order by ascending or descending order
+  function sortOrder() {
+    setIsAscending(!isAscending);
   }
 
   // Create map of history array elements to React button elements
@@ -116,7 +143,10 @@ export default function Game() {
         <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
       </div>
       <div className="game-info">
-        <ol>{moves}</ol>
+        <button className="move-order" onClick={sortOrder}>
+          Sort by {isAscending ? "Descending" : "Ascending"} Order
+        </button>
+        <ol>{isAscending ? moves : moves.reverse()}</ol>
       </div>
     </div>
   );
@@ -139,11 +169,12 @@ function calculateWinner(squares) {
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
 
+    // If first position letter matches second and third position letters
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
       return squares[a];
     }
   }
 
-  // Returns null if game still in progress
+  // Return null if the game is still in progress
   return null;
 }
