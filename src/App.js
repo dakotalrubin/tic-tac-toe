@@ -12,7 +12,7 @@ function Square({ value, onSquareClick }) {
 // Child component of the parent component Game
 // Parent component of the child component Square
 function Board({ xIsNext, squares, onPlay }) {
-  // Generate a square with given id
+  // Generate square with given id
   function renderSquare(id) {
     return (
       <Square
@@ -23,7 +23,7 @@ function Board({ xIsNext, squares, onPlay }) {
     );
   }
 
-  // Generate a game board with given size using a nested for loop
+  // Generate game board with given size using a nested for loop
   function renderBoard(size) {
     let board = [];
 
@@ -62,6 +62,9 @@ function Board({ xIsNext, squares, onPlay }) {
       nextSquares[index] = "O";
     }
 
+    // Add index of the clicked square to current board
+    nextSquares[9] = index;
+
     // Add current board to history array and update player turn
     onPlay(nextSquares);
   }
@@ -94,6 +97,19 @@ export default function Game() {
   const [currentMove, setCurrentMove] = useState(0);
   const [isAscending, setIsAscending] = useState(true);
 
+  // Location for each move in (row, column) format
+  const locations = [
+    [1, 1],
+    [1, 2],
+    [1, 3],
+    [2, 1],
+    [2, 2],
+    [2, 3],
+    [3, 1],
+    [3, 2],
+    [3, 3]
+  ];
+
   // The "X" player moves on even-numbered turns
   const xIsNext = currentMove % 2 === 0;
 
@@ -112,20 +128,28 @@ export default function Game() {
     setCurrentMove(nextMove);
   }
 
-  // Sort move order by ascending or descending order
+  // Sort move history by ascending or descending order
   function sortOrder() {
     setIsAscending(!isAscending);
   }
 
   // Create map of history array elements to React button elements
   const moves = history.map((squares, move) => {
+    // Create variable for message text, track index of clicked squares
     let description;
+    let index = squares[9];
 
     // Set message text
     if (move > 0 && move === currentMove) {
-      return <li key={move}>You are viewing Move #{move}</li>;
+      description =
+        "You are viewing Move #" + move + " (" + locations[index] + ")";
+      return (
+        <li key={move} style={{ fontSize: 13.5 }}>
+          {description}
+        </li>
+      );
     } else if (move > 0) {
-      description = "Go to Move #" + move;
+      description = "Go to Move #" + move + " (" + locations[index] + ")";
     } else {
       description = "Go to Game Start";
     }
@@ -169,12 +193,12 @@ function calculateWinner(squares) {
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
 
-    // If first position letter matches second and third position letters
+    // First position letter must match second and third position letters
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
       return squares[a];
     }
   }
 
-  // Return null if the game is still in progress
+  // Return null if game still in progress
   return null;
 }
