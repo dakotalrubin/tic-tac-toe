@@ -1,9 +1,13 @@
 import { useState } from "react";
 
 // Child component of the parent component Board
-function Square({ value, onSquareClick }) {
+function Square({ value, isWinningSquare, onSquareClick }) {
+  // Add green highlighting to a winning square
   return (
-    <button className="square" onClick={onSquareClick}>
+    <button
+      className={"square " + (isWinningSquare ? "winning-square" : null)}
+      onClick={onSquareClick}
+    >
       {value}
     </button>
   );
@@ -12,21 +16,24 @@ function Square({ value, onSquareClick }) {
 // Child component of the parent component Game
 // Parent component of the child component Square
 function Board({ xIsNext, squares, onPlay }) {
-  // Generate square with given id
+  // Generate a square with given id
   function renderSquare(id) {
+    let isWinningSquare = checkWinningSquare(id);
     return (
       <Square
         key={id}
         value={squares[id]}
+        isWinningSquare={isWinningSquare}
         onSquareClick={() => handleClick(id)}
       />
     );
   }
 
-  // Generate game board with given size using a nested for loop
+  // Generate a game board with given size
   function renderBoard(size) {
     let board = [];
 
+    // Render squares into rows and push to game board
     for (let i = 0; i < size; i++) {
       let row = [];
 
@@ -62,26 +69,41 @@ function Board({ xIsNext, squares, onPlay }) {
       nextSquares[index] = "O";
     }
 
-    // Add index of the clicked square to current board
+    // Track index of the clicked square in current squares array
     nextSquares[9] = index;
 
     // Add current board to history array and update player turn
     onPlay(nextSquares);
   }
 
+  // Determine whether square with given id is a winning square
+  function checkWinningSquare(id) {
+    let isWinningSquare;
+
+    if (winningSquares) {
+      isWinningSquare = winningSquares.includes(id);
+    } else {
+      isWinningSquare = false;
+    }
+
+    return isWinningSquare;
+  }
+
   // Check win conditions
   const winner = calculateWinner(squares);
-  let status;
+  let status, winningSquares;
 
   // Set game status text
   if (winner) {
-    status = "Winner: " + winner;
+    status = "Winner: " + winner.player;
+    winningSquares = winner.line;
   } else if (!squares.includes(null)) {
     status = "It's a draw!";
   } else {
     status = "Next player: " + (xIsNext ? "X" : "O");
   }
 
+  // Create game board with given size 3x3
   return (
     <>
       <div className="status">{status}</div>
@@ -97,6 +119,9 @@ export default function Game() {
   const [currentMove, setCurrentMove] = useState(0);
   const [isAscending, setIsAscending] = useState(true);
 
+  // The "X" player moves on even-numbered turns
+  const xIsNext = currentMove % 2 === 0;
+
   // Location for each move in (row, column) format
   const locations = [
     [1, 1],
@@ -110,20 +135,17 @@ export default function Game() {
     [3, 3]
   ];
 
-  // The "X" player moves on even-numbered turns
-  const xIsNext = currentMove % 2 === 0;
-
-  // Current board state is the current move array in history array
+  // Current game board state is the current squares array in move history array
   const currentSquares = history[currentMove];
 
-  // Add nextSquares array to history array at the current move index
+  // Add nextSquares array to nextHistory array at the current move index
   function handlePlay(nextSquares) {
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
     setHistory(nextHistory);
     setCurrentMove(nextHistory.length - 1);
   }
 
-  // Current board state is the move selected by the player
+  // Current game board state reflects the move selected by the player
   function jumpTo(nextMove) {
     setCurrentMove(nextMove);
   }
@@ -135,25 +157,22 @@ export default function Game() {
 
   // Create map of history array elements to React button elements
   const moves = history.map((squares, move) => {
-    // Create variable for message text, track index of clicked squares
+    // Create variable for message text, track index of clicked square
     let description;
     let index = squares[9];
 
-    // Set message text
+    // Set message or button text
     if (move > 0 && move === currentMove) {
       description =
         "You are viewing Move #" + move + " (" + locations[index] + ")";
-      return (
-        <li key={move} style={{ fontSize: 13.5 }}>
-          {description}
-        </li>
-      );
+      return <li key={move}>{description}</li>;
     } else if (move > 0) {
       description = "Go to Move #" + move + " (" + locations[index] + ")";
     } else {
       description = "Go to Game Start";
     }
 
+    // Create button to return to previous move in move history list
     return (
       <li key={move}>
         <button onClick={() => jumpTo(move)}>{description}</button>
@@ -161,13 +180,14 @@ export default function Game() {
     );
   });
 
+  // Create game board and move history list
   return (
     <div className="game">
       <div className="game-board">
         <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
       </div>
       <div className="game-info">
-        <button className="move-order" onClick={sortOrder}>
+        <button className="move-history" onClick={sortOrder}>
           Sort by {isAscending ? "Descending" : "Ascending"} Order
         </button>
         <ol>{isAscending ? moves : moves.reverse()}</ol>
@@ -178,6 +198,7 @@ export default function Game() {
 
 // Check squares array for win conditions
 function calculateWinner(squares) {
+  // Location for each winning combination in index format
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -194,8 +215,9 @@ function calculateWinner(squares) {
     const [a, b, c] = lines[i];
 
     // First position letter must match second and third position letters
+    // Return object containing winning player and line of squares
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
+      return { player: squares[a], line: [a, b, c] };
     }
   }
 

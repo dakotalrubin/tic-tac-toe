@@ -11,7 +11,7 @@
   "keywords": [],
   "name": "tic-tac-toe",
   "description": "Learning React with the React.dev tutorial for Tic-Tac-Toe",
-  "version": "0.0.21",
+  "version": "0.0.198",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
